@@ -1,1 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lumion Users — AI Job Profiles</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f9fafb;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .expand {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    .expand.open {
+      max-height: 500px;
+    }
+  </style>
+</head>
 
+<body class="min-h-screen">
+
+  <!-- Navbar -->
+  <header class="bg-white shadow-sm sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto flex justify-between items-center p-4">
+      <div class="flex items-center gap-2">
+        <img src="https://i.ibb.co/XfRLzWwy/Logo.png" class="h-8" />
+        <h1 class="text-xl font-bold text-indigo-700">Lumion AI — Users</h1>
+      </div>
+      <div class="flex gap-4 items-center">
+        <a href="index.html" class="text-sm text-indigo-600 hover:underline">🏠 Dashboard</a>
+        <a href="jobs.html" class="text-sm text-indigo-600 hover:underline">💼 Jobs</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search -->
+  <section class="max-w-6xl mx-auto mt-6 bg-white shadow-sm rounded-lg p-4 flex flex-wrap gap-3 items-center">
+    <input id="searchUser" type="text" placeholder="Search by name or skill..." class="border p-2 rounded w-72" />
+    <button id="clearUsers" class="bg-gray-100 px-3 py-2 rounded hover:bg-gray-200">Clear</button>
+  </section>
+
+  <!-- Users List -->
+  <main class="max-w-6xl mx-auto p-6 grid gap-4" id="userList"></main>
+
+  <script src="../data/jobs.js"></script>
+  <script src="../data/users.js"></script>
+  <script>
+    const userList = document.getElementById("userList");
+    const searchUser = document.getElementById("searchUser");
+
+    function findTopMatches(user) {
+      return jobs
+        .map(job => {
+          let score = 0;
+          const skillOverlap = job.skills?.filter(s => user.skills.includes(s)).length || 0;
+          if (skillOverlap > 0) score += skillOverlap * 15;
+          if (job.jobType === user.preferences.jobType) score += 15;
+          if (job.location.includes(user.preferences.location)) score += 20;
+          return { ...job, score };
+        })
+        .filter(j => j.score >= 25)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+    }
+
+    function renderUsers(list) {
+      userList.innerHTML = "";
+      if (list.length === 0) {
+        userList.innerHTML = `<div class="text-center text-gray-500 p-6">No users found</div>`;
+        return;
+      }
+
+      list.forEach(user => {
+        const matches = findTopMatches(user);
+        const card = document.createElement("div");
+        card.className = "card bg-white border rounded-lg p-4";
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-semibold text-lg text-indigo-700">${user.name}</h2>
+              <p class="text-gray-600 text-sm">${user.experienceLevel} • ${user.preferences.location}</p>
+              <p class="text-sm mt-1">${user.preferences.salaryRange} • ${user.preferences.jobType}</p>
+            </div>
+            <button class="text-sm text-indigo-600 border px-3 py-1 rounded hover:bg-indigo-600 hover:text-white transition">View</button>
+          </div>
+
+          <div class="expand mt-3 border-t pt-3">
+            <p class="text-gray-700 text-sm">${user.bio}</p>
+            <div class="mt-3">
+              <h3 class="font-semibold text-sm">Career Goal:</h3>
+              <p class="text-gray-700 text-sm">${user.careerGoal}</p>
+            </div>
+
+            <div class="mt-3">
+              <h3 class="font-semibold text-sm">Skills:</h3>
+              <p class="text-gray-700 text-sm">${user.skills.join(", ")}</p>
+            </div>
+
+            <div class="mt-4 bg-gray-50 p-3 rounded">
+              <h4 class="font-semibold text-indigo-700 mb-2 text-sm">Top AI-Matched Jobs:</h4>
+              ${
+                matches.length > 0
+                  ? matches.map(m => `
+                    <div class="border-b py-2 text-sm">
+                      <strong>${m.title}</strong> — ${m.company} (${m.location}) 
+                      <div class="text-gray-600">Score: ${m.score}</div>
+                    </div>`).join('')
+                  : '<p class="text-gray-500 text-sm">No matching jobs found.</p>'
+              }
+            </div>
+
+            <button class="mt-3 bg-indigo-600 text-white px-4 py-2 text-sm rounded hover:bg-indigo-700">
+              ${user.autoApply ? "✅ Auto-Apply Enabled" : "Enable Auto-Apply"}
+            </button>
+          </div>
+        `;
+        const btn = card.querySelector("button");
+        const expand = card.querySelector(".expand");
+        btn.addEventListener("click", () => {
+          expand.classList.toggle("open");
+          btn.textContent = expand.classList.contains("open") ? "Hide" : "View";
+        });
+        userList.appendChild(card);
+      });
+    }
+
+    function applyUserSearch() {
+      const q = searchUser.value.toLowerCase();
+      const filtered = users.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        u.skills.join(" ").toLowerCase().includes(q) ||
+        u.preferences.location.toLowerCase().includes(q)
+      );
+      renderUsers(filtered);
+    }
+
+    searchUser.addEventListener("input", applyUserSearch);
+    document.getElementById("clearUsers").addEventListener("click", () => {
+      searchUser.value = "";
+      renderUsers(users);
+    });
+
+    renderUsers(users);
+  </script>
+</body>
+</html>
