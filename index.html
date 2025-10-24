@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobs-AI | Lumion</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>💼 Lumion Jobs-AI</h1>
+    <p>Smart Local AI Matching for Employers & Job Seekers</p>
+  </header>
 
+  <main>
+    <section class="cards">
+      <a href="jobs.html" class="card">
+        <h2>View Jobs</h2>
+        <p>Browse all 50 job listings across industries</p>
+      </a>
+
+      <a href="users.html" class="card">
+        <h2>View Candidates</h2>
+        <p>Meet 20 active professionals ready to apply</p>
+      </a>
+
+      <a href="#" class="card" id="runMatch">
+        <h2>Run AI Match</h2>
+        <p>Match users to jobs instantly (local engine)</p>
+      </a>
+    </section>
+
+    <section id="result" class="hidden">
+      <h2>🧠 Match Results</h2>
+      <pre id="output"></pre>
+    </section>
+  </main>
+
+  <script src="data/jobs.js"></script>
+  <script src="data/users.js"></script>
+  <script src="js/match-engine.js"></script>
+  <script>
+    document.getElementById("runMatch").addEventListener("click", () => {
+      const results = runMatchingEngine();
+      document.getElementById("output").textContent = JSON.stringify(results, null, 2);
+      document.getElementById("result").classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
