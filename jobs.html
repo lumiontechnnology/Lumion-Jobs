@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jobs — Lumion AI Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: #f9fafb;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .expand {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    .expand.open {
+      max-height: 400px;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
 
+  <!-- Navbar -->
+  <header class="bg-white shadow-sm sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto flex justify-between items-center p-4">
+      <div class="flex items-center gap-2">
+        <img src="https://i.ibb.co/XfRLzWwy/Logo.png" class="h-8" />
+        <h1 class="text-xl font-bold text-indigo-700">Lumion Jobs Portal</h1>
+      </div>
+      <div>
+        <a href="index.html" class="text-sm text-indigo-600 hover:underline">🏠 Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <section class="max-w-6xl mx-auto mt-6 bg-white shadow-sm rounded-lg p-4 flex flex-wrap gap-3 items-center">
+    <input id="search" type="text" placeholder="Search job title..." class="border p-2 rounded w-60" />
+    <select id="locationFilter" class="border p-2 rounded w-48">
+      <option value="">All Locations</option>
+    </select>
+    <select id="typeFilter" class="border p-2 rounded w-48">
+      <option value="">All Job Types</option>
+      <option value="Remote">Remote</option>
+      <option value="Hybrid">Hybrid</option>
+      <option value="Onsite">Onsite</option>
+    </select>
+    <button id="clearFilters" class="bg-gray-100 px-3 py-2 rounded hover:bg-gray-200">Clear Filters</button>
+  </section>
+
+  <!-- Job Listings -->
+  <main class="max-w-6xl mx-auto p-6 grid gap-4" id="jobList"></main>
+
+  <script src="../data/jobs.js"></script>
+  <script>
+    const jobList = document.getElementById("jobList");
+    const searchInput = document.getElementById("search");
+    const locationFilter = document.getElementById("locationFilter");
+    const typeFilter = document.getElementById("typeFilter");
+
+    // Populate locations
+    const uniqueLocations = [...new Set(jobs.map(j => j.location))];
+    uniqueLocations.forEach(loc => {
+      const opt = document.createElement("option");
+      opt.value = loc;
+      opt.textContent = loc;
+      locationFilter.appendChild(opt);
+    });
+
+    function renderJobs(list) {
+      jobList.innerHTML = "";
+      if (list.length === 0) {
+        jobList.innerHTML = `<div class="text-center text-gray-500 p-6">No matching jobs found</div>`;
+        return;
+      }
+
+      list.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "card bg-white border rounded-lg p-4";
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="font-semibold text-lg text-indigo-700">${job.title}</h2>
+              <p class="text-gray-600 text-sm">${job.company} — ${job.location}</p>
+              <p class="text-sm mt-1">${job.salaryRange} • ${job.jobType}</p>
+            </div>
+            <button class="text-sm text-indigo-600 border px-3 py-1 rounded hover:bg-indigo-600 hover:text-white transition">Details</button>
+          </div>
+          <div class="expand mt-3 border-t pt-3">
+            <p class="text-sm text-gray-700">${job.description || "No description available."}</p>
+            <div class="mt-3">
+              <h3 class="font-semibold text-sm text-gray-800">Skills Required:</h3>
+              <p class="text-sm text-gray-600">${(job.skills || []).join(", ")}</p>
+            </div>
+            <button class="mt-3 bg-indigo-600 text-white px-4 py-2 text-sm rounded hover:bg-indigo-700">Apply Now</button>
+          </div>
+        `;
+        const detailsBtn = card.querySelector("button");
+        const expandDiv = card.querySelector(".expand");
+        detailsBtn.addEventListener("click", () => {
+          expandDiv.classList.toggle("open");
+          detailsBtn.textContent = expandDiv.classList.contains("open") ? "Hide" : "Details";
+        });
+        jobList.appendChild(card);
+      });
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.toLowerCase();
+      const loc = locationFilter.value;
+      const type = typeFilter.value;
+      const filtered = jobs.filter(j => {
+        return (
+          j.title.toLowerCase().includes(query) &&
+          (loc ? j.location === loc : true) &&
+          (type ? j.jobType === type : true)
+        );
+      });
+      renderJobs(filtered);
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    locationFilter.addEventListener("change", applyFilters);
+    typeFilter.addEventListener("change", applyFilters);
+    document.getElementById("clearFilters").addEventListener("click", () => {
+      searchInput.value = "";
+      locationFilter.value = "";
+      typeFilter.value = "";
+      renderJobs(jobs);
+    });
+
+    renderJobs(jobs);
+  </script>
+</body>
+</html>
